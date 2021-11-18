@@ -1,5 +1,4 @@
 const path = require('path')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const WebpackBar = require('webpackbar');
@@ -7,28 +6,28 @@ const WebpackBar = require('webpackbar');
 module.exports = (_env, options) => {
     const isProduction = options.mode !== 'development';
 
-    return {
-        entry: './src/js/app.js',
+    let config = {
+        entry: ['./src/js/app.js', './src/scss/app.scss'],
         output: {
             path: path.resolve(__dirname, 'dist'),
-            filename: 'js/app.js'
-        }, 
+            filename: 'js/app.js',
+            pathinfo: isProduction,
+            clean: true,
+        },
     
         module: {
             rules: [
                 {
                     test: /\.js$/,
-                    exclude: /node_modules/,
+                    include: path.resolve(__dirname, 'src'),
                     use: {
-                        loader: 'babel-loader',
-                        options: {
-                            presets: ['@babel/preset-env']
-                        }
+                        loader: 'swc-loader',
                     }
                 },
     
                 {
                     test: /\.(sa|sc|c)ss$/,
+                    include: path.resolve(__dirname, 'src'),
                     use: [
                         isProduction ? 
                         {
@@ -56,7 +55,6 @@ module.exports = (_env, options) => {
 
         plugins: [
             new WebpackBar(),
-            new CleanWebpackPlugin(),
             new MiniCssExtractPlugin({
                 filename: 'css/app.css'
             })
@@ -67,8 +65,12 @@ module.exports = (_env, options) => {
               `...`,
               new CssMinimizerPlugin(),
             ],
-          },
-
-        devtool: 'source-map'
+          }
     }
+
+    if(! isProduction) {
+        config['devtool'] = 'source-map'
+    }
+
+    return config;
 }
